@@ -39,6 +39,8 @@ jinja2==3.1.5
     # via mkdocs-material
     # via mkdocstrings
     # via torch
+joblib==1.4.2
+    # via scikit-learn
 markdown==3.7
     # via mkdocs
     # via mkdocs-autorefs
@@ -76,6 +78,7 @@ networkx==3.4.2
 numpy==2.2.1
     # via dgl
     # via pandas
+    # via scikit-learn
     # via scipy
 nvidia-cublas-cu12==12.1.3.1
     # via nvidia-cudnn-cu12
@@ -147,14 +150,19 @@ regex==2024.11.6
 requests==2.32.3
     # via dgl
     # via mkdocs-material
+scikit-learn==1.6.1
+    # via struct-ppi-pred
 scipy==1.15.1
     # via dgl
+    # via scikit-learn
 setuptools==75.8.0
     # via torch
 six==1.17.0
     # via python-dateutil
 sympy==1.13.3
     # via torch
+threadpoolctl==3.5.0
+    # via scikit-learn
 torch==2.4.0
     # via dgl
 tqdm==4.67.1
