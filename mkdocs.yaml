@@ -1,0 +1,101 @@
+site_name: struct-ppi-pred
+site_description: "Structure-Based Deep Learning Framework for Modeling Human-Gut Bacterial Protein Interactions"
+repo_url: "https://github.com/c3biolab/struct_ppi_pred"
+edit_uri: "edit/master/docs/"
+repo_name: "c3biolab/struct_ppi_pred"
+copyright: |
+  Copyright &copy; 2025-2025 <a href="http://www.eie.gr/nhrf/institutes/icb/index_en.html" target="_blank" rel="noopener">C3BioLab – ICB, NHRF</a>
+nav:
+  - Overview: index.md
+theme:
+  name: material
+  features:
+    - search.suggest
+    - content.code.annotate
+    - content.tabs.link
+    - content.tooltips
+    - header.autohide
+    - navigation.expand
+    - navigation.indexes
+    - navigation.instant
+    - navigation.prune
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+    - toc.integrate
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/lightbulb-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/lightbulb
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to light mode
+  font:
+    text: Roboto
+    code: Roboto Mono
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths:
+            - src
+          rendering:
+            show_source: true
+          options:
+            docstring_style: google
+            docstring_options:
+            ignore_init_summary: yes
+            merge_init_into_class: yes
+            show_submodules: no
+            show_root_toc_entry: no
+            show_symbol_type_toc: true
+            show_symbol_type_heading: true
+            show_signature_annotations: true
+            signature_crossrefs: true
+            separate_signature: true
+            show_source: true
+            modernize_annotations: true
+            summary: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.emoji
+  - pymdownx.magiclink
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist
+  - toc:
+      permalink: ¤
+watch:
+  - docs
+  - README.md
