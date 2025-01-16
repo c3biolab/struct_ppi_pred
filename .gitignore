@@ -177,3 +177,5 @@ src/struct_ppi_pred/data/*
 !src/struct_ppi_pred/data/README.md
 
 MAPE-PPI
+
+data
