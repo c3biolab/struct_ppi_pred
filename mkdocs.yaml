@@ -7,6 +7,8 @@ copyright: |
   Copyright &copy; 2025-2025 <a href="http://www.eie.gr/nhrf/institutes/icb/index_en.html" target="_blank" rel="noopener">C3BioLab – ICB, NHRF</a>
 nav:
   - Overview: index.md
+  - Code Reference:
+    - Trainer: src/Trainer/trainer.md
 theme:
   name: material
   features:

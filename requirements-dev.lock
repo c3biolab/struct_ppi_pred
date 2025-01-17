@@ -22,6 +22,7 @@ click==8.1.8
     # via mkdocs
     # via mkdocstrings
 colorama==0.4.6
+    # via griffe
     # via mkdocs-material
 dgl @ https://data.dgl.ai/wheels/torch-2.4/cu124/dgl-2.4.0%2Bcu124-cp312-cp312-manylinux1_x86_64.whl
     # via struct-ppi-pred
@@ -32,6 +33,8 @@ fsspec==2024.12.0
     # via torch
 ghp-import==2.1.0
     # via mkdocs
+griffe==1.5.5
+    # via mkdocstrings-python
 idna==3.10
     # via requests
 jinja2==3.1.5
@@ -62,6 +65,7 @@ mkdocs==1.6.1
     # via struct-ppi-pred
 mkdocs-autorefs==1.3.0
     # via mkdocstrings
+    # via mkdocstrings-python
 mkdocs-get-deps==0.2.0
     # via mkdocs
 mkdocs-material==9.5.49
@@ -69,7 +73,10 @@ mkdocs-material==9.5.49
 mkdocs-material-extensions==1.3.1
     # via mkdocs-material
 mkdocstrings==0.27.0
+    # via mkdocstrings-python
     # via struct-ppi-pred
+mkdocstrings-python==1.13.0
+    # via mkdocstrings
 mpmath==1.3.0
     # via sympy
 networkx==3.4.2
@@ -115,6 +122,7 @@ paginate==0.5.7
     # via mkdocs-material
 pandas==2.2.3
     # via dgl
+    # via struct-ppi-pred
 pathspec==0.12.1
     # via mkdocs
 platformdirs==4.3.6
@@ -167,6 +175,7 @@ torch==2.4.0
     # via dgl
 tqdm==4.67.1
     # via dgl
+    # via struct-ppi-pred
 triton==3.0.0
     # via torch
 typing-extensions==4.12.2
