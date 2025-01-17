@@ -3,17 +3,46 @@ import pickle
 import numpy as np
 import torch
 import dgl
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 
 class PPIDataset(Dataset):
+    """
+    Dataset class for Protein-Protein Interaction (PPI) data.
+
+    Attributes:
+        dataDF (pd.DataFrame): DataFrame containing PPI pairs and their labels.
+        processed_data_dir (str): Directory containing processed protein graph data.
+    """
     def __init__(self, dataDF, processed_data_dir):
+        """
+        Initialize the dataset.
+
+        Args:
+            dataDF (pd.DataFrame): DataFrame with columns "P1", "P2", and "Label".
+            processed_data_dir (str): Directory containing preprocessed graph and feature data.
+        """
         self.dataDF = dataDF
         self.processed_data_dir = processed_data_dir
 
     def __len__(self):
+        """
+        Get the number of samples in the dataset.
+
+        Returns:
+            int: Number of samples.
+        """
         return len(self.dataDF)
 
     def obtain_seq(self,prot_node):
+        """
+        Generate sequential edges for a protein graph based on node indices.
+
+        Args:
+            prot_node (torch.Tensor): Tensor containing node features.
+
+        Returns:
+            list: List of tuples representing sequential edges.
+        """
         prot_seq = []
         for j in range(prot_node.shape[0]-1):
             prot_seq.append((j, j+1))
@@ -21,6 +50,15 @@ class PPIDataset(Dataset):
         return prot_seq
 
     def __getitem__(self, idx):
+        """
+        Get the data for a single PPI sample.
+
+        Args:
+            idx (int): Index of the sample.
+
+        Returns:
+            tuple: A tuple containing two DGL graphs (protein 1 and protein 2) and the interaction label.
+        """
         # Get sample: 1 PPI (1: inter/0: not inter)
         sample = self.dataDF.iloc[idx, :]
         p1 = sample["P1"]
