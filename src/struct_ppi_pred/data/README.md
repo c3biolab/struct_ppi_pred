@@ -5,8 +5,11 @@ This module is responsible for handling the data preprocessing and preparation f
 ## Dataset Requirements
 
 Your dataset must meet the following specifications:
-1. **Split Files**: 
+
+1. **Split Files**:
+
    - Provide split files (`train.csv`, `val.csv`, `test.csv`) in the `data/` directory.
+
    - Each file must have three columns:
      - `P1`: UniProt ID of the first protein.
      - `P2`: UniProt ID of the second protein.
@@ -20,7 +23,9 @@ Your dataset must meet the following specifications:
    ```
 
 2. **Protein Structure Data**:
+
    - Download protein structure files from the [AlphaFold Database](https://alphafold.ebi.ac.uk/) for each protein listed in your split files.
+
    - Follow the preprocessing steps outlined in the [MAPE-PPI framework](https://github.com/LirongWu/MAPE-PPI) to generate structural features for each protein.
 
 ## Folder Structure
