@@ -11,7 +11,11 @@ dependencies = [
     "scikit-learn>=1.6.1",
     "pandas>=2.2.3",
     "tqdm>=4.67.1",
+    "typer>=0.15.1",
 ]
+
+scripts.manage = "struct_ppi_pred.cli.task_manager:cli"
+
 readme = "README.md"
 requires-python = ">= 3.8"
 
