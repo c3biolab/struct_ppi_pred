@@ -10,7 +10,7 @@ from pathlib import Path
 from sklearn.metrics import precision_score, recall_score, f1_score, classification_report
 
 from struct_ppi_pred.utils.logger import setup_logger
-from struct_ppi_pred.model import get_data_loader, PPI_Model, FocalLoss
+from struct_ppi_pred.model import get_ppi_data_loader, PPI_Model, FocalLoss
 
 logger = setup_logger()
 warnings.filterwarnings("ignore")
@@ -66,14 +66,14 @@ class Trainer:
             os.makedirs(self.save_path)
 
         # Load data
-        train_loader = get_data_loader(self.train_data_path, 
+        train_loader = get_ppi_data_loader(self.train_data_path, 
                                        self.processed_data_dir,
                                        batch_size=self.batch_size, 
                                        shuffle=True, 
                                        num_workers=4, 
                                        pin_memory=True)
 
-        val_loader = get_data_loader(self.val_data_path, 
+        val_loader = get_ppi_data_loader(self.val_data_path, 
                                      self.processed_data_dir,
                                      batch_size=self.batch_size, 
                                      shuffle=False, 

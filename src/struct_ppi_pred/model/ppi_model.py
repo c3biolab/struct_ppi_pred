@@ -116,14 +116,6 @@ class PPI_Model(nn.Module):
         """
         super(PPI_Model, self).__init__()
 
-        self.vae_model = CodeBook(mape_cfg)
-        self.vae_model.load_state_dict(torch.load(mape_weights_path))
-        self.vae_model = self.vae_model.to("cuda")
-
-        # Freeze the VAE model
-        for param in self.vae_model.parameters():
-            param.requires_grad = False
-
         # Define the layers: input - output dimensions
         embedding_dim = 512
 
@@ -135,7 +127,7 @@ class PPI_Model(nn.Module):
         self.fc4 = nn.Linear(128, 1)
         self.dropout = nn.Dropout(0.1)
 
-    def forward(self, p1, p2):
+    def forward(self, p1_embed, p2_embed):
         """
         Forward pass of the PPI_Model.
 
@@ -147,8 +139,8 @@ class PPI_Model(nn.Module):
             torch.Tensor: Logits indicating the likelihood of interaction between the two proteins.
         """
         # Obtain protein embeddings
-        p1_embed = self.vae_model.Protein_Encoder.forward(p1, self.vae_model.vq_layer)
-        p2_embed = self.vae_model.Protein_Encoder.forward(p2, self.vae_model.vq_layer)
+        #p1_embed = self.vae_model.Protein_Encoder.forward(p1, self.vae_model.vq_layer)
+        #p2_embed = self.vae_model.Protein_Encoder.forward(p2, self.vae_model.vq_layer)
 
         if len(p1_embed.shape) == 2:
             p1_embed = p1_embed.unsqueeze(1)
