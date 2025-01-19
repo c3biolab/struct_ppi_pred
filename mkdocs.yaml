@@ -10,6 +10,7 @@ nav:
   - Data Integration: src/data.md
   - Code Reference:
     - Data Loader: src/DataLoader/dataloader.md
+    - Embedder: src/Model/embedder.md
     - Model: src/Model/model.md
     - Trainer: src/Trainer/trainer.md
 theme:

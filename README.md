@@ -4,3 +4,7 @@
 ```bash
 git clone https://github.com/LirongWu/MAPE-PPI
 ```
+
+```bash
+rye run manage embedder generate
+```
