@@ -12,6 +12,8 @@ dependencies = [
     "pandas>=2.2.3",
     "tqdm>=4.67.1",
     "typer>=0.15.1",
+    "plotly>=5.24.1",
+    "kaleido>=0.2.1",
 ]
 
 scripts.manage = "struct_ppi_pred.cli.task_manager:cli"
