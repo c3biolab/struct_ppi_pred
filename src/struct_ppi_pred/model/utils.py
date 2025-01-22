@@ -72,6 +72,7 @@ def get_ppi_data_loader(data_path, processed_data_dir, batch_size=64, shuffle=Tr
     """
     # Load the dataset as a DataFrame
     dataDF = pd.read_csv(data_path)
+
     # Initialize the dataset
     dataset = PPIDataset(dataDF, processed_data_dir)
     # Create the DataLoader

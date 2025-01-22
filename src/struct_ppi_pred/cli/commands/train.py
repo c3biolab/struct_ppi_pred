@@ -17,9 +17,3 @@ def start_training(epochs: int = 100, batch_size: int = 256, patience: int = 3):
     trainer = Trainer(epochs=epochs, batch_size=batch_size, patience=patience)
     trainer.run()
 
-@trainer_cli.command("results")
-def display_results():
-    """
-    Display the latest training or validation results.
-    """
-    typer.echo("Displaying results...")

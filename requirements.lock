@@ -45,6 +45,8 @@ jinja2==3.1.5
     # via torch
 joblib==1.4.2
     # via scikit-learn
+kaleido==0.2.1
+    # via struct-ppi-pred
 markdown==3.7
     # via mkdocs
     # via mkdocs-autorefs
@@ -123,6 +125,7 @@ nvidia-nvtx-cu12==12.1.105
 packaging==24.2
     # via dgl
     # via mkdocs
+    # via plotly
 paginate==0.5.7
     # via mkdocs-material
 pandas==2.2.3
@@ -133,6 +136,8 @@ pathspec==0.12.1
 platformdirs==4.3.6
     # via mkdocs-get-deps
     # via mkdocstrings
+plotly==5.24.1
+    # via struct-ppi-pred
 psutil==6.1.1
     # via dgl
 pydantic==2.10.5
@@ -179,6 +184,8 @@ six==1.17.0
     # via python-dateutil
 sympy==1.13.3
     # via torch
+tenacity==9.0.0
+    # via plotly
 threadpoolctl==3.5.0
     # via scikit-learn
 torch==2.4.0

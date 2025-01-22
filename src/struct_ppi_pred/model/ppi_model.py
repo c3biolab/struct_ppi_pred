@@ -1,8 +1,6 @@
-import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .MAPE_PPI.mape_enc import CodeBook
 
 class FocalLoss(nn.Module):
     """
@@ -33,142 +31,129 @@ class FocalLoss(nn.Module):
         F_loss = self.alpha * (1 - pt) ** self.gamma * BCE_loss
         return torch.mean(F_loss)
 
+
 class CrossAttention(nn.Module):
     """
-    Implements Cross-Attention mechanism using multi-head attention.
-
-    Attributes:
-        embed_dim (int): Dimensionality of the input embeddings.
-        num_heads (int): Number of attention heads.
-        dropout (float): Dropout rate for attention weights.
-    """
-    def __init__(self, embed_dim, num_heads, dropout=0.1):
-        super(CrossAttention, self).__init__()
-        self.multihead_attn = nn.MultiheadAttention(embed_dim, num_heads, dropout=dropout)
-        self.norm = nn.LayerNorm(embed_dim)
-        self.dropout = nn.Dropout(dropout)
-
-    def forward(self, query, key, value):
-        """
-        Apply cross-attention.
-
-        Args:
-            query (torch.Tensor): Query tensor.
-            key (torch.Tensor): Key tensor.
-            value (torch.Tensor): Value tensor.
-
-        Returns:
-            torch.Tensor: Output tensor after applying attention.
-        """
-        attn_output, _ = self.multihead_attn(query, key, value)
-        output = self.norm(query + self.dropout(attn_output))  # Residual connection + normalization
-        return output
-
-class AdaptiveFusion(nn.Module):
-    """
-    Implements Adaptive Fusion mechanism for combining embeddings.
+    Implements Cross-Attention mechanism.
 
     Attributes:
         embedding_dim (int): Dimensionality of the input embeddings.
+        num_heads (int): Number of attention heads.
     """
-    def __init__(self, embedding_dim):
-        super(AdaptiveFusion, self).__init__()
-        self.weight_layer = nn.Linear(embedding_dim * 2, 2)
-        self.softmax = nn.Softmax(dim=1)
+    def __init__(self, embedding_dim, num_heads):
+        super(CrossAttention, self).__init__()
+        self.embedding_dim = embedding_dim
+        self.num_heads = num_heads
+        self.head_dim = embedding_dim // num_heads
 
-    def forward(self, p1_embed, p2_embed):
-        """
-        Perform adaptive fusion of two embeddings.
+        assert self.head_dim * num_heads == embedding_dim, "embedding_dim must be divisible by num_heads"
 
-        Args:
-            p1_embed (torch.Tensor): Embedding of protein 1.
-            p2_embed (torch.Tensor): Embedding of protein 2.
+        self.q_linear = nn.Linear(embedding_dim, embedding_dim)
+        self.k_linear = nn.Linear(embedding_dim, embedding_dim)
+        self.v_linear = nn.Linear(embedding_dim, embedding_dim)
+        self.out_proj = nn.Linear(embedding_dim, embedding_dim)
 
-        Returns:
-            torch.Tensor: Fused embedding.
-        """
-        combined = torch.cat([p1_embed, p2_embed], dim=1)
-        weights = self.softmax(self.weight_layer(combined))
-        fused_embedding = weights[:, 0].unsqueeze(1) * p1_embed + weights[:, 1].unsqueeze(1) * p2_embed
-        return fused_embedding
 
-class PPI_Model(nn.Module):
+    def forward(self, query, key, value):
+      """
+      Perform cross-attention between query, key and value.
+      Args:
+          query (torch.Tensor): Query tensor.
+          key (torch.Tensor): Key tensor.
+          value (torch.Tensor): Value tensor.
+
+      Returns:
+          torch.Tensor: Weighted value tensor based on attention scores.
+      """
+
+      batch_size = query.size(0)
+      q = self.q_linear(query).view(batch_size, -1, self.num_heads, self.head_dim).transpose(1,2) # [batch_size, num_heads, seq_len, head_dim]
+      k = self.k_linear(key).view(batch_size, -1, self.num_heads, self.head_dim).transpose(1,2)    
+      v = self.v_linear(value).view(batch_size, -1, self.num_heads, self.head_dim).transpose(1,2)  
+      
+      attn_scores = torch.matmul(q, k.transpose(-2, -1)) / (self.head_dim ** 0.5)  # [batch_size, num_heads, seq_len_q, seq_len_k]
+      attn_weights = F.softmax(attn_scores, dim=-1)
+
+      output = torch.matmul(attn_weights, v)                                    # [batch_size, num_heads, seq_len_q, head_dim]
+      output = output.transpose(1, 2).contiguous().view(batch_size, -1, self.embedding_dim)
+      output = self.out_proj(output)                                             # [batch_size, seq_len, embedding_dim]
+
+      return output.mean(dim=1, keepdim=False)
+
+
+
+class BiDirectionalCrossAttention(nn.Module):
     """
-    Protein-Protein Interaction (PPI) Model leveraging embeddings from a pretrained VAE (MAPE) model,
-    attention mechanisms, and fully connected layers.
+    Implements Bi-directional Cross-Attention mechanism for combining embeddings.
 
     Attributes:
-        vae_model (CodeBook): Pretrained MAPE model for protein embeddings.
-        cross_attention (CrossAttention): Cross-attention layer for processing protein embeddings.
-        fc1 (nn.Linear): First fully connected layer.
-        fc2 (nn.Linear): Second fully connected layer.
-        fc3 (nn.Linear): Third fully connected layer.
-        fc4 (nn.Linear): Output layer.
-        dropout (nn.Dropout): Dropout layer to prevent overfitting.
+        embedding_dim (int): Dimensionality of the input embeddings.
+        num_heads (int): Number of attention heads.
     """
-    def __init__(self, mape_cfg, mape_weights_path):
-        """
-        Initialize the PPI_Model.
 
-        Args:
-            mape_cfg (dict): Configuration for the pretrained MAPE model.
-            mape_weights_path (str): Path to the pretrained MAPE model weights.
-        """
-        super(PPI_Model, self).__init__()
-
-        # Define the layers: input - output dimensions
-        embedding_dim = 512
-
-        self.cross_attention = CrossAttention(embedding_dim, num_heads=4, dropout=0.1)
-
-        self.fc1 = nn.Linear(embedding_dim * 2, 512)
-        self.fc2 = nn.Linear(512, 256)
-        self.fc3 = nn.Linear(256, 128)
-        self.fc4 = nn.Linear(128, 1)
-        self.dropout = nn.Dropout(0.1)
+    def __init__(self, embedding_dim, num_heads):
+        super(BiDirectionalCrossAttention, self).__init__()
+        self.cross_attention_p1_to_p2 = CrossAttention(embedding_dim, num_heads)
+        self.cross_attention_p2_to_p1 = CrossAttention(embedding_dim, num_heads)
+        self.fusion_proj = nn.Linear(embedding_dim * 2, embedding_dim)
 
     def forward(self, p1_embed, p2_embed):
-        """
-        Forward pass of the PPI_Model.
+      """
+      Performs bi-directional cross-attention fusion between two input embeddings.
 
-        Args:
-            p1 (torch.Tensor): Input features for protein 1.
-            p2 (torch.Tensor): Input features for protein 2.
+      Args:
+        p1_embed (torch.Tensor): Embedding of protein 1.
+        p2_embed (torch.Tensor): Embedding of protein 2.
 
-        Returns:
-            torch.Tensor: Logits indicating the likelihood of interaction between the two proteins.
-        """
-        # Obtain protein embeddings
-        #p1_embed = self.vae_model.Protein_Encoder.forward(p1, self.vae_model.vq_layer)
-        #p2_embed = self.vae_model.Protein_Encoder.forward(p2, self.vae_model.vq_layer)
+      Returns:
+        torch.Tensor: Fused embedding.
+      """
+      
+      p1_to_p2 = self.cross_attention_p1_to_p2(p1_embed, p2_embed, p2_embed) # p1 attends to p2
+      p2_to_p1 = self.cross_attention_p2_to_p1(p2_embed, p1_embed, p1_embed) # p2 attends to p1
 
-        if len(p1_embed.shape) == 2:
-            p1_embed = p1_embed.unsqueeze(1)
-        if len(p2_embed.shape) == 2:
-            p2_embed = p2_embed.unsqueeze(1)
+      # Combine the original embeddings with the attention weighted embeddings
+      fused_p1 = p1_embed + p1_to_p2
+      fused_p2 = p2_embed + p2_to_p1
+      
+      # Concatenate and project to have a single embedding 
+      fused_embedding = self.fusion_proj(torch.cat([fused_p1, fused_p2], dim=-1))
 
-        # Move the embeddings to the same device
-        p1_embed = p1_embed.to('cuda')
-        p2_embed = p2_embed.to('cuda')
+      return fused_embedding
 
-        # Apply attention mechanism
-        attended_a = self.cross_attention(p1_embed, p2_embed, p2_embed)  # A attends to B
-        attended_b = self.cross_attention(p2_embed, p1_embed, p1_embed)  # B attends to A
 
-        # Pooling (mean pooling for simplicity)
-        pooled_a = torch.mean(attended_a, dim=1)
-        pooled_b = torch.mean(attended_b, dim=1)
+import torch.nn as nn
 
-        # Concatenate pooled embeddings
-        combined = torch.cat([pooled_a, pooled_b], dim=1)
+class PPI_Model(nn.Module):
+    def __init__(self): 
+        super(PPI_Model, self).__init__()
+        embedding_dim = 512
 
-        # Fully connected layers
-        x = F.relu(self.fc1(combined))
-        x = self.dropout(x)
-        x = F.relu(self.fc2(x))
-        x = self.dropout(x)
-        x = F.relu(self.fc3(x))
-        x = self.dropout(x)
-        x = self.fc4(x)
+        # Optional Projection Layer
+        self.projection_dim = 256
+        self.heads = 4
+        self.p1_projection = nn.Linear(embedding_dim, self.projection_dim)
+        self.p2_projection = nn.Linear(embedding_dim, self.projection_dim)
+        self.cross_attention = BiDirectionalCrossAttention(self.projection_dim, 4)
+        self.fc1 = nn.Linear(self.projection_dim, 256)
+        self.fc2 = nn.Linear(256, 128)
+        self.fc3 = nn.Linear(128, 1)
+        self.dropout1 = nn.Dropout(0.5)
+        self.dropout2 = nn.Dropout(0.3)
+        self.relu = nn.ReLU()
+
+    def forward(self, p1_embed, p2_embed):
+     
+        p1_embed = self.relu(self.p1_projection(p1_embed))
+        p2_embed = self.relu(self.p2_projection(p2_embed))
+
+        # Bi-directional Cross-Attention
+        x = self.cross_attention(p1_embed, p2_embed)
+
+        x = self.dropout1(x)
+        x = self.relu(self.fc1(x))
+        x = self.dropout2(x)
+        x = self.relu(self.fc2(x))
+        x = self.fc3(x)
 
         return x
