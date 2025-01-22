@@ -181,3 +181,5 @@ src/struct_ppi_pred/model/MAPE-PPI
 data
 
 output
+
+test.py

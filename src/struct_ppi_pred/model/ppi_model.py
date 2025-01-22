@@ -121,15 +121,11 @@ class BiDirectionalCrossAttention(nn.Module):
 
       return fused_embedding
 
-
-import torch.nn as nn
-
 class PPI_Model(nn.Module):
     def __init__(self): 
         super(PPI_Model, self).__init__()
         embedding_dim = 512
 
-        # Optional Projection Layer
         self.projection_dim = 256
         self.heads = 4
         self.p1_projection = nn.Linear(embedding_dim, self.projection_dim)
