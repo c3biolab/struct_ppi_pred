@@ -27,13 +27,13 @@ class Embedder:
         val_data_path (str): Path to the CSV file containing the validation dataset.
         test_data_path (str): Path to the CSV file containing the test dataset.
         processed_data_dir (str): Directory containing processed protein data files.
-        embedding_dir (str): Directory where embeddings are saved and loaded from.
         mape_weights_path (str): Path to the pre-trained weights of the MAPE-PPI model.
         device (torch.device): The device (CPU or CUDA) on which to perform computations.
         batch_size (int): Batch size used for generating embeddings.
         vae_model (CodeBook): The loaded VAE model used for generating embeddings.
     """
     def __init__(self,
+                mode = "dev",
                 data_path: str = "/home/c3biolab/c3biolab_projects/doctorals/d/struct_ppi_pred/data",
                 mape_weights_path: str = "/home/c3biolab/c3biolab_projects/doctorals/d/struct_ppi_pred/data/data_sources/vae_model.ckpt",
                 batch_size: int = 256,
@@ -49,11 +49,16 @@ class Embedder:
         """
 
         self.data_path = data_path
-        self.train_data_path = os.path.join(self.data_path, "train.csv")
-        self.val_data_path = os.path.join(self.data_path, "val.csv")
-        self.test_data_path = os.path.join(self.data_path, "test.csv")
+        self.mode = mode
+
+        if self.mode == "dev":
+            self.train_data_path = os.path.join(self.data_path, "train.csv")
+            self.val_data_path = os.path.join(self.data_path, "val.csv")
+            self.test_data_path = os.path.join(self.data_path, "test.csv")
+        elif self.mode == "inf":
+            self.pair_info_file = os.path.join(self.data_path, "human_gut_pairs_Healthy.json")
+
         self.processed_data_dir = os.path.join(self.data_path, "processed_data")
-        self.embedding_dir = os.path.join(self.data_path, "embeddings")
         self.mape_weights_path = mape_weights_path
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.batch_size = batch_size
@@ -61,9 +66,6 @@ class Embedder:
 
         with open(self.mape_cfg_file, "r") as f:
             self.mape_cfg = json.load(f)
-
-        # Create embeddings directory if it does not exist
-        os.makedirs(self.embedding_dir, exist_ok=True)
 
         # Initialize the VAE model
         self.vae_model = CodeBook(self.mape_cfg)
@@ -76,7 +78,7 @@ class Embedder:
 
         self.vae_model.eval()
 
-    def get_protein_list(self):
+    def get_dataset_protein_list(self):
         """
         Extracts a unique list of protein identifiers from the train, validation, and test datasets.
 
@@ -99,6 +101,24 @@ class Embedder:
 
         return protein_list
 
+    def get_inference_protein_list(self):
+        """
+        Extracts a unique list of protein identifiers from the inference dataset.
+
+        Returns:
+            list: A list of unique protein identifiers.
+        """
+        
+        with open(self.pair_info_file, "r") as f:
+            pair_info = json.load(f)
+
+        pool_A = pair_info["Pool_A"]
+        pool_B = pair_info["Pool_B"]
+
+        protein_list = list(set(pool_A + pool_B))
+
+        return protein_list
+
     def run(self):
         """
         Executes the embedding generation or loading process for all unique proteins in the dataset.
@@ -106,7 +126,11 @@ class Embedder:
         This method orchestrates the main workflow of the Embedder. It first retrieves the list of unique proteins,
         then sets up a DataLoader, and finally generates or loads embeddings in batches.
         """
-        protein_list = self.get_protein_list()
+
+        if self.mode == "dev":
+            protein_list = self.get_dataset_protein_list()
+        else:
+            protein_list = self.get_inference_protein_list()
 
         logger.info("Number of unique proteins: %d", len(protein_list))
         logger.info("Device: %s", self.device)
@@ -144,6 +168,6 @@ class Embedder:
 
                 # Save embeddings
                 for protein_id, embedding in zip(protein_ids, embeddings):
-                    embedding_file_path = os.path.join(self.embedding_dir, f"{protein_id}.pt")
+                    embedding_file_path = os.path.join(self.processed_data_dir, f"{protein_id}_embedding.pt")
                     if not os.path.exists(embedding_file_path):
                         torch.save(embedding, embedding_file_path)
