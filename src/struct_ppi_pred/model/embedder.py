@@ -33,17 +33,17 @@ class Embedder:
         vae_model (CodeBook): The loaded VAE model used for generating embeddings.
     """
     def __init__(self,
+                mape_weights_path: str,
+                data_path: str,
                 mode = "dev",
-                data_path: str = "/home/c3biolab/c3biolab_projects/doctorals/d/struct_ppi_pred/data",
-                mape_weights_path: str = "/home/c3biolab/c3biolab_projects/doctorals/d/struct_ppi_pred/data/data_sources/vae_model.ckpt",
                 batch_size: int = 256,
                 ):
         """
         Initializes the Embedder.
 
         Args:
-            data_path (str): Path to the data directory. Defaults to "/path/to/your/data".
-            mape_weights_path (str): Path to the pre-trained MAPE-PPI model weights. Defaults to "/path/to/your/vae_model.ckpt".
+            data_path (str): Path to the data directory.
+            mape_weights_path (str): Path to the pre-trained MAPE-PPI model weights. 
             batch_size (int): Batch size for embedding generation. Defaults to 256.
             mape_cfg_file (str): Configuration dictionary for the MAPE-PPI model.
         """
@@ -56,7 +56,7 @@ class Embedder:
             self.val_data_path = os.path.join(self.data_path, "val.csv")
             self.test_data_path = os.path.join(self.data_path, "test.csv")
         elif self.mode == "inf":
-            self.pair_info_file = os.path.join(self.data_path, "human_gut_pairs_Healthy.json")
+            self.pair_info_file = os.path.join(self.data_path, "pairs.json")
 
         self.processed_data_dir = os.path.join(self.data_path, "processed_data")
         self.mape_weights_path = mape_weights_path

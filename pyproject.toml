@@ -16,7 +16,7 @@ dependencies = [
     "kaleido>=0.2.1",
 ]
 
-scripts.manage = "struct_ppi_pred.cli.task_manager:cli"
+scripts.task = "struct_ppi_pred.cli.task_manager:cli"
 
 readme = "README.md"
 requires-python = ">= 3.8"

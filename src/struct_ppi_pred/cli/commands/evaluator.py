@@ -10,6 +10,6 @@ def val_process():
     evaluator.run()
 
 @eval_cli.command("test")
-def test_process():
-    evaluator = Evaluator(mode="test", threshold=0.4046)
+def test_process(threshold: float = typer.Option(help="Threshold for converting probabilities to binary predictions")):
+    evaluator = Evaluator(mode="test", threshold=threshold)
     evaluator.run()
