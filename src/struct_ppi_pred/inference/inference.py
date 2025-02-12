@@ -3,6 +3,7 @@ import json
 import torch
 
 from tqdm import tqdm
+from collections import defaultdict
 from torch.utils.data import Dataset, DataLoader
 
 from struct_ppi_pred.utils.logger import setup_logger
@@ -64,6 +65,8 @@ class Inference():
     """
     def __init__(self,
                 data_path="/home/c3biolab/c3biolab_projects/doctorals/d/struct_ppi_pred/data/gut_data",
+                human_uniprot_fts_dir="/home/c3biolab/c3biolab_projects/doctorals/d/struct_ppi_pred/data/protein_fts/uniprot_fts",
+                bac_uniprot_fts_dir="/home/c3biolab/c3biolab_projects/Gut_MB_Project/DDA/data/ProteinDatabase",
                 batch_size: int = 256,
                 output_dir: str = "/home/c3biolab/c3biolab_projects/doctorals/d/struct_ppi_pred/output",
                 pred_dir_name: str = "Healthy",
@@ -91,6 +94,8 @@ class Inference():
         self.pair_info_file = os.path.join(self.data_path, "human_gut_pairs_Healthy.json")
         self.processed_data_dir = os.path.join(self.data_path, "processed_data")
         self.per_prot_dir = os.path.join(self.out_dir, "PerProtein")
+        self.human_uniprot_fts_dir = human_uniprot_fts_dir
+        self.bac_uniprot_fts_dir = bac_uniprot_fts_dir
         
         os.makedirs(self.per_prot_dir, exist_ok=True)
 
@@ -243,3 +248,172 @@ class Inference():
             logger.info(f"Pool A involved: {len(pool_A_involved)}")
             logger.info(f"Pool B involved: {len(pool_B_involved)}")
             logger.info(f"Total predictions: {tot}")
+
+class ProteoformAnalyzer:
+    """
+    Analyzes interactions between human and bacterial proteoforms.
+
+    This class provides methods to extract involved proteins from preloaded data,
+    analyze common interactions, and save the results to JSON files.
+
+    Attributes:
+        human_uniprot_fts_dir (str): Directory containing human protein UniProt feature files.
+        bac_uniprot_fts_dir (str): Directory containing bacterial protein UniProt feature files.
+        per_prot_dir (str): Directory containing per-protein prediction files.
+        out_dir (str): Directory where the results will be saved.
+
+    """
+    def __init__(self, human_uniprot_fts_dir, bac_uniprot_fts_dir, per_prot_dir, out_dir):
+        """
+        Initialize the ProteoformAnalyzer with necessary directories and preloads prediction data.
+
+        Args:
+            human_uniprot_fts_dir (str): Directory containing human protein UniProt feature files.
+            bac_uniprot_fts_dir (str): Directory containing bacterial protein UniProt feature files.
+            per_prot_dir (str): Directory containing per-protein prediction files.
+            out_dir (str): Directory where the results will be saved.
+        """
+        self.human_uniprot_fts_dir = human_uniprot_fts_dir
+        self.bac_uniprot_fts_dir = bac_uniprot_fts_dir
+        self.per_prot_dir = per_prot_dir
+        self.out_dir = out_dir
+        self.human_to_bacterial = defaultdict(list)
+        self.bacterial_to_human = defaultdict(list)
+        self.preload_predictions()
+
+    def preload_predictions(self):
+        """
+        Preloads prediction data from individual protein prediction files.
+
+        This method iterates through files in the specified directory, extracts protein names and prediction data,
+        and populates two dictionaries: human_to_bacterial and bacterial_to_human.
+
+        Each key in these dictionaries is a protein accession, and the corresponding value is a list of interacting
+        proteins from the other group.
+
+        The preloading step is necessary for the analysis of proteoform interactions.
+
+        Attributes:
+            human_to_bacterial (dict): A dictionary mapping human protein accessions to lists of bacterial protein accessions.
+            bacterial_to_human (dict): A dictionary mapping bacterial protein accessions to lists of human protein accessions.
+        """
+        for filename in os.listdir(self.per_prot_dir):
+            if not filename.endswith('_predictions.json'):
+                continue
+            human_prot = filename.split('_')[0]
+            with open(os.path.join(self.per_prot_dir, filename), 'r') as f:
+                predictions = json.load(f)
+            for pred in predictions.values():
+                bac_prot = pred["bacterial_protein"]
+                self.human_to_bacterial[human_prot].append(bac_prot)
+                self.bacterial_to_human[bac_prot].append(human_prot)
+
+    def extract_genes(self, prot_accessions, uniprot_dir, is_bacterial=False):
+        """
+        Extract gene names from UniProt feature files for the given proteins.
+
+        Args:
+            prot_accessions (list): List of protein accessions.
+            uniprot_dir (str): Directory containing UniProt feature files.
+            is_bacterial (bool, optional): Whether the proteins are bacterial or not. Defaults to False.
+
+        Returns:
+            dict: A dictionary mapping each gene name to a list of its corresponding protein accessions.
+        """
+        gene_dict = defaultdict(list)
+        for prot in prot_accessions:
+            file_path = os.path.join(uniprot_dir, f"{prot}.json")
+            if not os.path.exists(file_path):
+                continue
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+                if is_bacterial:
+                    data = data.get("to", {})
+                genes = data.get("genes", [])
+                if not genes:
+                    continue
+                gene_names = set()
+                for gene_entry in genes:
+                    if "geneName" in gene_entry:
+                        gene_names.add(gene_entry["geneName"]["value"])
+                    elif "orderedLocusNames" in gene_entry and gene_entry["orderedLocusNames"]:
+                        gene_names.add(gene_entry["orderedLocusNames"][0]["value"])
+                for gene in gene_names:
+                    gene_dict[gene].append(data["primaryAccession"])
+        return gene_dict
+
+    def analyze_common_interactions(self, gene_dict, is_human=True):
+        """
+        Analyze common interactions between human and bacterial proteoforms.
+
+        Args:
+            gene_dict (dict): A dictionary mapping each gene name to a list of its corresponding protein accessions.
+            is_human (bool, optional): Whether to analyze human proteoforms or bacterial proteoforms. Defaults to True.
+
+        Returns:
+            dict: A dictionary containing the results. For each gene, the dictionary contains the following keys:
+                - proteins (list): A list of protein accessions associated with the gene.
+                - common_interactions (int): The number of common bacterial interactions between the human proteoforms.
+                - interactions (int): The total number of bacterial interactions between the human proteoforms.
+
+        """
+        results = {}
+        for gene, proteins in gene_dict.items():
+            if len(proteins) < 2:
+                continue
+            if is_human:
+                # Human proteoform: common bacterial interactions
+                all_interactions = []
+                for prot in proteins:
+                    all_interactions.extend(self.human_to_bacterial.get(prot, []))
+                total_interactions = len(all_interactions)
+                common_interactions = len(set(all_interactions)) if proteins else 0
+            else:
+                # Bacterial proteoform: common human interactions
+                all_interactions = []
+                for prot in proteins:
+                    all_interactions.extend(self.bacterial_to_human.get(prot, []))
+                total_interactions = len(all_interactions)
+                common_interactions = len(set(all_interactions)) if proteins else 0
+            results[gene] = {
+                "proteins": proteins,
+                "common_interactions": common_interactions,
+                "interactions": total_interactions
+            }
+        return results
+
+    def proteoform_analysis(self):
+        """
+        Analyze common interactions between human and bacterial proteoforms.
+
+        This method extracts the involved proteins from the preloaded data, extracts the gene mappings,
+        analyzes the interactions between the proteoforms, and saves the results to disk.
+
+        The results are saved as two JSON files: one for human proteoforms and one for bacterial proteoforms.
+        Each file contains a dictionary mapping each gene to a dictionary with the following keys:
+            - proteins (list): A list of protein accessions associated with the gene.
+            - common_interactions (int): The number of common bacterial interactions between the human proteoforms.
+            - interactions (int): The total number of bacterial interactions between the human proteoforms.
+
+        The method also logs some statistics to the logger.
+        """
+        human_prots = set(self.human_to_bacterial.keys())
+        bac_prots = set(self.bacterial_to_human.keys())
+        
+        # Extract gene mappings
+        human_genes = self.extract_genes(human_prots, self.human_uniprot_fts_dir)
+        bac_genes = self.extract_genes(bac_prots, self.bac_uniprot_fts_dir, is_bacterial=True)
+
+        # Analyze interactions
+        human_results = self.analyze_common_interactions(human_genes, is_human=True)
+        bac_results = self.analyze_common_interactions(bac_genes, is_human=False)
+
+        # Save results
+        with open(os.path.join(self.out_dir, "human_proteoforms_common_interactions.json"), 'w') as f:
+            json.dump(human_results, f, indent=4)
+        with open(os.path.join(self.out_dir, "bacterial_proteoforms_common_interactions.json"), 'w') as f:
+            json.dump(bac_results, f, indent=4)
+
+        # Log statistics
+        logger.info(f"Human genes with multiple proteins: {sum(len(v)>1 for v in human_genes.values())}")
+        logger.info(f"Bacterial genes with multiple proteins: {sum(len(v)>1 for v in bac_genes.values())}")
