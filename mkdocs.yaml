@@ -12,7 +12,9 @@ nav:
     - Data Loader: src/DataLoader/dataloader.md
     - Embedder: src/Model/embedder.md
     - Model: src/Model/model.md
+    - Embedder: src/Model/embedder.md
     - Trainer: src/Trainer/trainer.md
+    - Inference: src/Inference/inference.md
 theme:
   name: material
   features:

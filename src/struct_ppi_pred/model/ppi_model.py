@@ -123,6 +123,20 @@ class BiDirectionalCrossAttention(nn.Module):
 
 class PPI_Model(nn.Module):
     def __init__(self): 
+        """
+        Initializes the PPI model.
+
+        Attributes:
+            p1_projection (nn.Linear): Projection layer for protein 1.
+            p2_projection (nn.Linear): Projection layer for protein 2.
+            cross_attention (BiDirectionalCrossAttention): Bi-directional cross-attention layer.
+            fc1 (nn.Linear): First fully connected layer.
+            fc2 (nn.Linear): Second fully connected layer.
+            fc3 (nn.Linear): Third fully connected layer (output layer).
+            dropout1 (nn.Dropout): Dropout layer after the first fully connected layer.
+            dropout2 (nn.Dropout): Dropout layer after the second fully connected layer.
+            relu (nn.ReLU): ReLU activation function.
+        """
         super(PPI_Model, self).__init__()
         embedding_dim = 512
 
@@ -139,7 +153,22 @@ class PPI_Model(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, p1_embed, p2_embed):
-     
+        """
+        Forward pass of the PPI model.
+
+        This method takes embeddings of two proteins and processes them through
+        projection layers, a bi-directional cross-attention mechanism, and a series
+        of fully connected layers with dropout and ReLU activation to produce a
+        prediction score for protein-protein interaction.
+
+        Args:
+            p1_embed (torch.Tensor): Embedding of protein 1.
+            p2_embed (torch.Tensor): Embedding of protein 2.
+
+        Returns:
+            torch.Tensor: Output interaction score.
+        """
+
         p1_embed = self.relu(self.p1_projection(p1_embed))
         p2_embed = self.relu(self.p2_projection(p2_embed))
 

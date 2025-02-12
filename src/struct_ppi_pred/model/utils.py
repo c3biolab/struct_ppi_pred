@@ -1,5 +1,4 @@
 import pandas as pd
-import torch
 import dgl
 from torch.utils.data import DataLoader
 

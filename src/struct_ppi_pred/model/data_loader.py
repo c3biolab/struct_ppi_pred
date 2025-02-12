@@ -1,9 +1,13 @@
 import os
 import pickle
 import numpy as np
+import pandas as pd
 import torch
 import dgl
+
+from typing import List
 from torch.utils.data import Dataset
+
 
 
 class ProteinDataset(Dataset):
@@ -17,7 +21,7 @@ class ProteinDataset(Dataset):
         protein_list (list): List of protein identifiers.
         processed_data_dir (str): Directory containing processed protein data files.
     """
-    def __init__(self, protein_list, processed_data_dir):
+    def __init__(self, protein_list: List, processed_data_dir: str):
         """
         Initializes the ProteinDataset.
 
@@ -31,7 +35,7 @@ class ProteinDataset(Dataset):
     def __len__(self):
         return len(self.protein_list)
 
-    def obtain_seq(self,prot_node):
+    def obtain_seq(self,prot_node: torch.Tensor):
         """
         Generate sequential edges for a protein graph based on node indices.
 
@@ -47,7 +51,16 @@ class ProteinDataset(Dataset):
             prot_seq.append((j+1, j))
         return prot_seq
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int):
+        """
+        Gets a protein graph from the dataset.
+
+        Args:
+            idx (int): Index of the protein in the dataset.
+
+        Returns:
+            tuple: A tuple containing the protein identifier and its graph.
+        """
         p = self.protein_list[idx]
         if not os.path.isfile(os.path.join(self.processed_data_dir, f"{p}_graph.pkl")):
             r_contacts_p1 = np.load(os.path.join(self.processed_data_dir, f"{p}_r_contacts.npy"), allow_pickle=True)
@@ -79,7 +92,7 @@ class PPIDataset(Dataset):
         dataDF (pd.DataFrame): DataFrame containing PPI pairs and their labels.
         processed_data_dir (str): Directory containing processed protein graph data.
     """
-    def __init__(self, dataDF, processed_data_dir):
+    def __init__(self, dataDF: pd.DataFrame, processed_data_dir: str):
         """
         Initialize the dataset.
 
