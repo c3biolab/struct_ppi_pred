@@ -6,8 +6,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+from pathlib import Path
 from tqdm import tqdm
-from sklearn.utils.class_weight import compute_class_weight
 from sklearn.metrics import precision_score, recall_score, f1_score, average_precision_score, roc_auc_score, matthews_corrcoef, balanced_accuracy_score, precision_recall_curve
 
 from struct_ppi_pred.utils.logger import setup_logger
@@ -33,11 +33,11 @@ class Trainer:
     """
 
     def __init__(self, 
-                 data_path: str = "/home/c3biolab/c3biolab_projects/doctorals/d/struct_ppi_pred/data",
-                 epochs: int = 10,
+                 data_path: str = os.path.join(Path(__file__).parent.parent.parent.parent, "data"),
+                 epochs: int = 100,
                  batch_size: int = 256, 
                  patience: int = 3, 
-                 save_path: str = "/home/c3biolab/c3biolab_projects/doctorals/d/struct_ppi_pred/output"):
+                 save_path: str = os.path.join(Path(__file__).parent.parent.parent.parent, "output")):
         
         self.data_path = data_path
         self.train_data_path = os.path.join(self.data_path, "train.csv")

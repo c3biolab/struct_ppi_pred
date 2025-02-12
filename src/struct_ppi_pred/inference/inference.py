@@ -2,6 +2,7 @@ import os
 import json
 import torch
 
+from pathlib import Path
 from tqdm import tqdm
 from collections import defaultdict
 from torch.utils.data import Dataset, DataLoader
@@ -64,12 +65,14 @@ class Inference():
         threshold (float): Threshold for converting probabilities to binary predictions.
     """
     def __init__(self,
-                data_path="/home/c3biolab/c3biolab_projects/doctorals/d/struct_ppi_pred/data/gut_data",
-                human_uniprot_fts_dir="/home/c3biolab/c3biolab_projects/doctorals/d/struct_ppi_pred/data/protein_fts/uniprot_fts",
-                bac_uniprot_fts_dir="/home/c3biolab/c3biolab_projects/Gut_MB_Project/DDA/data/ProteinDatabase",
+                data_path: str,
+                human_uniprot_fts_dir: str,
+                bac_uniprot_fts_dir: str,
+                #human_uniprot_fts_dir="/home/c3biolab/c3biolab_projects/doctorals/d/struct_ppi_pred/data/protein_fts/uniprot_fts",
+                #bac_uniprot_fts_dir="/home/c3biolab/c3biolab_projects/Gut_MB_Project/DDA/data/ProteinDatabase",
+                pred_dir_name: str,
                 batch_size: int = 256,
-                output_dir: str = "/home/c3biolab/c3biolab_projects/doctorals/d/struct_ppi_pred/output",
-                pred_dir_name: str = "Healthy",
+                output_dir: str = os.path.join(Path(__file__).parent.parent.parent.parent, "output"),
                 threshold = None
                 ):
         
@@ -77,10 +80,10 @@ class Inference():
         Initialize the Inference class.
 
         Args:
-            data_path (str): Path to the data directory. Defaults to "/home/c3biolab/c3biolab_projects/doctorals/d/struct_ppi_pred/data/gut_data".
+            data_path (str): Path to the data directory. 
             batch_size (int): Batch size to use for inference. Defaults to 256.
-            output_dir (str): Directory where the inference results should be saved. Defaults to "/home/c3biolab/c3biolab_projects/doctorals/d/struct_ppi_pred/output".
-            pred_dir_name (str): The name of the subdirectory where the inference results should be saved. Defaults to "Healthy".
+            output_dir (str): Directory where the inference results should be saved.
+            pred_dir_name (str): The name of the subdirectory where the inference results should be saved.
             threshold (float): The threshold for converting model probabilities to binary predictions. Must be provided.
         """
         self.best_model_path = os.path.join(output_dir, "best_model.pt")
@@ -91,7 +94,7 @@ class Inference():
 
         self.data_path = data_path
         self.batch_size = batch_size
-        self.pair_info_file = os.path.join(self.data_path, "human_gut_pairs_Healthy.json")
+        self.pair_info_file = os.path.join(self.data_path, "pairs.json")
         self.processed_data_dir = os.path.join(self.data_path, "processed_data")
         self.per_prot_dir = os.path.join(self.out_dir, "PerProtein")
         self.human_uniprot_fts_dir = human_uniprot_fts_dir

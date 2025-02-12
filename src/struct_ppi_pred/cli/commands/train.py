@@ -3,7 +3,7 @@ from struct_ppi_pred.trainer import Trainer
 
 trainer_cli: typer.Typer = typer.Typer()
 
-@trainer_cli.command("start")
+@trainer_cli.command("train")
 def start_training(epochs: int = 100, batch_size: int = 256, patience: int = 3):
     """
     Start training the PPI model.

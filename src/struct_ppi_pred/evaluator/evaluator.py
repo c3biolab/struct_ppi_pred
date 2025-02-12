@@ -18,6 +18,7 @@ from sklearn.metrics import (
 import torch
 
 from tqdm import tqdm
+from pathlib import Path
 
 from struct_ppi_pred.utils.logger import setup_logger
 from struct_ppi_pred.model.utils import get_ppi_data_loader
@@ -35,8 +36,8 @@ class Evaluator:
                  mode: str, 
                  threshold = None,
                  batch_size: int = 256,
-                 data_path: str = "/home/c3biolab/c3biolab_projects/doctorals/d/struct_ppi_pred/data",
-                 output_dir: str = "/home/c3biolab/c3biolab_projects/doctorals/d/struct_ppi_pred/output"):
+                 data_path: str = os.path.join(Path(__file__).parent.parent.parent.parent, "data"),
+                 output_dir: str = os.path.join(Path(__file__).parent.parent.parent.parent, "output")):
         """
         Initializes the Evaluator with a default threshold and output directory.
 

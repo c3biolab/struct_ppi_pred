@@ -30,7 +30,7 @@ Your dataset must meet the following specifications:
 
 ## Folder Structure
 
-The `src/data` module assumes the following structure for your dataset:
+Module assumes the following structure for your dataset:
 
 ```
 data/
