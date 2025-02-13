@@ -69,14 +69,14 @@ class ProteinDataset(Dataset):
 
             seq_p1 = self.obtain_seq(x_p1)
 
-            prot_g1 = dgl.heterograph({('amino_acid', 'SEQ', 'amino_acid') : seq_p1, 
+            prot_g = dgl.heterograph({('amino_acid', 'SEQ', 'amino_acid') : seq_p1, 
                                     ('amino_acid', 'STR_KNN', 'amino_acid') : k_contacts_p1.tolist(),
                                     ('amino_acid', 'STR_DIS', 'amino_acid') : r_contacts_p1.tolist()})
-            prot_g1.ndata['x'] = torch.FloatTensor(x_p1)
+            prot_g.ndata['x'] = torch.FloatTensor(x_p1)
 
             # Save graph
             with open(os.path.join(self.processed_data_dir, f"{p}_graph.pkl"), "wb") as tf:
-                pickle.dump(prot_g1, tf)
+                pickle.dump(prot_g, tf)
 
         else:
             with open(os.path.join(self.processed_data_dir, f"{p}_graph.pkl"), "rb") as tf:

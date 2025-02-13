@@ -170,9 +170,6 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-# Ignore all files in src/data
-src/struct_ppi_pred/data/*
-
 # Do not ignore data/README.md
 !src/struct_ppi_pred/data/README.md
 
@@ -183,3 +180,5 @@ data
 output
 
 test.py
+
+.tmp_*
